@@ -2,6 +2,7 @@ import 'dart:developer';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:maam_riffat_mid_task/model/product.dart';
 import 'package:maam_riffat_mid_task/screens/products.dart';
 import 'package:maam_riffat_mid_task/screens/signup.dart';
 import 'package:maam_riffat_mid_task/widgets/dialogBox.dart';
@@ -60,13 +61,19 @@ class _LoginState extends State<Login> {
                 return null;
               }
             }),
-            SizedBox(height: 50),
+             SizedBox(height: 20,),
             Login_SignUp_Buttons(),
           ],
         ),
       ),
     );
   }
+
+  bool p1 = false;
+  bool p2 = false;
+  bool p3 = false;
+
+  String p1text = "";
 
   Row Login_SignUp_Buttons() {
     return Row(
@@ -82,33 +89,43 @@ class _LoginState extends State<Login> {
   }
 
   void login() async {
-    String user_exits = "not found";
-    if (await DatabaseHelper.instance.checkUser(user.text, pass.text)) {
-      user_exits = "User exits";
-    }
+  
+   products.plist=[];
     if (_formKey.currentState!.validate()) {
+
+    if (await DatabaseHelper.instance.checkUser(user.text, pass.text)) {
+      popper("not found");
+      return;
+      }
       Navigator.push(context, MaterialPageRoute(
         builder: (context) {
           return productView();
         },
       ));
-      // showDialog(
-      //     context: context,
-      //     builder: ((context) {
-      //       return Container(
-      //         child: AlertDialog(
-      //           title: Text(user_exits),
-      //           actions: [
-      //             TextButton(
-      //                 onPressed: () {
-      //                   Navigator.pop(context);
-      //                 },
-      //                 child: Text("OK"))
-      //           ],
-      //         ),
-      //       );
-      //     }));
+     
     }
+   
+  }
+
+
+  popper(String user_exits)
+  {
+     showDialog(
+          context: context,
+          builder: ((context) {
+            return Container(
+              child: AlertDialog(
+                title: Text(user_exits),
+                actions: [
+                  TextButton(
+                      onPressed: () {
+                        Navigator.pop(context);
+                      },
+                      child: Text("OK"))
+                ],
+              ),
+            );
+          }));
   }
 
   void _navigateToNextScreen(BuildContext context) {

@@ -49,7 +49,11 @@ class _productViewState extends State<productView> {
                         Text("condition ${products.plist[index].condition}"),
                         SizedBox(height: 5),
                         Text("price ${products.plist[index].price}"),
+                        SizedBox(height: 5,),
+                        Text("QTY ${products.plist[index].pqty}")
+                       
                       ]),
+                     
                       trailing: Wrap(spacing: 12, children: [
                         IconButton(
                             onPressed: () {
@@ -65,7 +69,8 @@ class _productViewState extends State<productView> {
                             icon: Icon(Icons.update)),
                         IconButton(
                             onPressed: () {
-                              deleteItem(index);
+                              products.plist.removeAt(index);
+                              setState(() {});
                             },
                             icon: Icon(Icons.delete))
                       ]),

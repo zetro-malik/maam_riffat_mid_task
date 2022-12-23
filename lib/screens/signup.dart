@@ -4,6 +4,7 @@ import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/src/widgets/container.dart';
 import 'package:flutter/src/widgets/framework.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:maam_riffat_mid_task/model/imgPicker.dart';
 import 'package:maam_riffat_mid_task/model/user.dart';
 import 'package:maam_riffat_mid_task/widgets/dialogBox.dart';
@@ -20,7 +21,7 @@ class SignUp extends StatefulWidget {
 
 class _SignUpState extends State<SignUp> {
 //varaibles...
-  File? _image;
+  File? img;
 
   TextEditingController user = TextEditingController();
   TextEditingController pass = TextEditingController();
@@ -46,24 +47,27 @@ class _SignUpState extends State<SignUp> {
             child: SingleChildScrollView(
               child: Column(
                 children: [
+                
                   //for round profile photo
                   GestureDetector(
                     onTap: () async {
-                      dynamic img = await ImgPicker.fromGallery();
-                      if (img != null) {
-                        final tempImg = File(img.path);
-                        setState(() {
-                          _image = tempImg;
-                        });
+                      final image = await ImagePicker().pickImage(source: ImageSource.gallery);
+
+                      if (image == null) {
+                        return null;
                       }
+                      final tempImg = File(image.path);
+                      setState(() {
+                        img = tempImg;
+                      });
                     },
-                    child: _image == null
+                    child: img == null
                         ? CircleAvatar(
                             backgroundColor: Colors.blue.shade300,
                             radius: 100,
                           )
                         : CircleAvatar(
-                            backgroundImage: FileImage(_image!),
+                            backgroundImage: FileImage(img!),
                             radius: 100,
                           ),
                   ),
@@ -125,10 +129,8 @@ class _SignUpState extends State<SignUp> {
     );
   }
 
-  Row bottomButton() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceAround,
-      children: [
+  ElevatedButton bottomButton() {
+    return 
         ElevatedButton(
             onPressed: () {
               onCreate(context);
@@ -144,54 +146,125 @@ class _SignUpState extends State<SignUp> {
                 "Create Account",
                 style: TextStyle(fontSize: 24),
               ),
-            )),
+            ));
+      
+  }
+
+  void bottomSheetDrawer() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+          borderRadius: BorderRadius.vertical(
+        top: Radius.circular(30),
+      )),
+      builder: (context) => DraggableScrollableSheet(
+          initialChildSize: 0.4,
+          maxChildSize: 0.9,
+          minChildSize: 0.32,
+          expand: false,
+          builder: (context, scrollController) {
+            return SingleChildScrollView(
+              controller: scrollController,
+              child: widgetsInBottomSheet(),
+            );
+          }),
+    );
+  }
+
+  Widget widgetsInBottomSheet() {
+    return Stack(
+      alignment: AlignmentDirectional.topCenter,
+      clipBehavior: Clip.none,
+      children: [
+        tipOnBottomSheet(),
+        Column(children: [
+          const SizedBox(
+            height: 100,
+          ),
+          SignInButton(
+            onTap: () async {
+              dynamic img = await ImgPicker.fromCamera();
+              if (img != null) {
+                final tempImg = File(img.path);
+                setState(() {
+                  img = tempImg;
+                });
+              }
+              Navigator.pop(context);
+            },
+            iconPath: 'assets/logos/camera.png',
+            textLabel: 'Take from camera',
+            backgroundColor: Colors.grey.shade300,
+            elevation: 0.0,
+          ),
+          const SizedBox(
+            height: 40,
+          ),
+          SignInButton(
+            onTap: () async {
+              dynamic img = await ImgPicker.fromGallery();
+              if (img != null) {
+                final tempImg = File(img.path);
+                setState(() {
+                  img = tempImg;
+                });
+              }
+
+              Navigator.pop(context);
+            },
+            iconPath: 'assets/logos/gallery.png',
+            textLabel: 'Take from gallery',
+            backgroundColor: Colors.grey.shade300,
+            elevation: 0.0,
+          ),
+        ])
       ],
     );
   }
 
+  Widget tipOnBottomSheet() {
+    return Positioned(
+      top: -15,
+      child: Container(
+        width: 60,
+        height: 7,
+        margin: const EdgeInsets.only(bottom: 20),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(5),
+          color: Colors.white,
+        ),
+      ),
+    );
+  }
+
+  File? img2;
+
   void onCreate(BuildContext context) async {
-    if (_image == null) {
-      showDialog(
-          context: context,
-          builder: ((context) {
-            return Container(
-              child: AlertDialog(
-                title: Text("please insert image"),
-                actions: [
-                  TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: Text("OK"))
-                ],
-              ),
-            );
-          }));
-    } else if (_formkey.currentState!.validate()) {
-      final bytes = _image?.readAsBytesSync();
+    final bytes = img?.readAsBytesSync();
+    String img64 = base64Encode(bytes!);
+    User obj = User(username: user.text, password: pass.text, image: img64);
+    await DatabaseHelper.instance.insertUser(obj);
 
-      String img64 = base64Encode(bytes!);
-      User obj = User(username: user.text, password: pass.text, image: img64);
-      await DatabaseHelper.instance.insertUser(obj);
+   
 
-      showDialog(
-        context: context,
-        builder: (context) {
-          return Container(
-            child: AlertDialog(
-              title: Text("Inserted..."),
-              actions: [
-                TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: Text("OK"))
-              ],
-            ),
-          );
-        },
-      );
-    }
+    showDialog(
+      context: context,
+      builder: (context) {
+        return Container(
+          child: AlertDialog(
+            title: Text("Inserted..."),
+            actions: [
+              TextButton(
+                  onPressed: () {
+                    Navigator.pop(context);
+                  },
+                  child: Text("OK"))
+            ],
+          ),
+        );
+      },
+    );
   }
 
   ElevatedButton CustomElevatedButton(func, String msg) {
